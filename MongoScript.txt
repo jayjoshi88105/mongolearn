@@ -1,0 +1,211 @@
+1) Refering the university - students - courses sample demostrated, pls do write for the following problem statement:
+  
+  ii) with the same set of collections, update the grade for students in each document
+    Script::
+    db.students.updateMany({ class: '11' }, { $set: { grade:'A1+' }})
+
+  iii) Do create a report of students with grade = A1 across the universities
+    Script::
+    db.students.aggregate([
+      { $match: {"grade":"A1"} },
+      {
+          $lookup:
+          {
+             from: 'universities',
+             localField: 'university',
+             foreignField: 'name', 
+             as: 'stud_data'
+          }
+      }
+    ])
+
+    Output::
+    {
+      _id: ObjectId("64e5e0c265b3b63b32b0698a"),
+      name: 'Jay',
+      age: 16,
+      class: '11',
+      grade: 'A1',
+      university: 'Anna University',
+      stud_data: [
+        {
+          _id: ObjectId("64e5d92165b3b63b32b06985"),
+          country: 'India',
+          city: 'Chennai',
+          name: 'Anna University',
+          location: {
+            type: 'Point',
+            coordinates: [
+              -5.6545645,
+              3.5454554
+            ]
+          }
+        }
+      ]
+    }
+
+    {
+      _id: ObjectId("64e5e1f665b3b63b32b0698d"),
+      name: 'Rahul',
+      age: 17,
+      class: '11',
+      grade: 'A1',
+      university: 'Harward University',
+      stud_data: [
+        {
+          _id: ObjectId("64e5da1165b3b63b32b06986"),
+          country: 'USA',
+          city: 'Massachusetts',
+          name: 'Harward University',
+          location: {
+            type: 'Point',
+            coordinates: [
+              -20.6545645,
+              10.5454554
+            ]
+          }
+        }
+      ]
+    }
+
+    i) How do we get the total number of students that have ever belongs to each one of the university
+    db.students.aggregate([
+    {
+      $lookup:
+      {
+        from: "universities",
+        let:{
+          uni_name: "$name"
+        },
+        pipeline: [
+          {
+            $match:
+            {
+              $expr:
+              {
+                $eq: ["$university","$$uni_name"]
+              }
+            }
+          },
+          {
+            '$project':{
+              university: 0, 
+              _id: 0
+            }
+          }
+        ],
+        'as': "studdata"
+      }
+    }
+  ])
+
+2)Do integrate MongoDB, performing CRUD operations with any of the collections. I have used NodeJS, ExpressJs
+  - Adding git repo here
+  https://github.com/jayjoshi88105/mongolearn
+  
+---------------------------------------------------------------
+
+3)More on multistage aggregation queries
+  Step 1: Create a collection and insert documents
+    = Done
+  Step 2: Execute the aggregation query and understand the result
+    db.orders.aggregate([
+      {
+        $lookup:
+        {
+          from: "inventory",
+          let:{
+              order_item: "$item", 
+              order_qty: "$ordered"
+          },
+          pipeline: [
+            {
+              $match:
+              {
+                $expr:
+                {
+                  $and:
+                  [
+                    {
+                      $eq: ["$stock_item","$$order_item"]
+                    },
+                    {
+                      $gte: ["$instock","$$order_qty"]
+                    },
+                  ]
+                }
+              }
+            },
+            {
+              '$project':{
+                stock_item: 0, 
+                _id: 0
+              }
+            }
+          ],
+          'as': "stockdata"
+        }
+      }
+    ])
+
+    Output:
+    {
+      _id: ObjectId("64e71b29f33ec3144a12dd5c"),
+      item: 'Almond',
+      price: '800',
+      ordered: '2000',
+      stockdata: [
+        {
+          warehouse_section: 'A',
+          instock: '5000'
+        }
+      ]
+    }
+    {
+      _id: ObjectId("64e71b29f33ec3144a12dd5d"),
+      item: 'cookies',
+      price: '100',
+      ordered: '500',
+      stockdata: []
+    }
+    {
+      _id: ObjectId("64e71b29f33ec3144a12dd5e"),
+      item: 'chocolates',
+      price: '200',
+      ordered: '1500',
+      stockdata: [
+        {
+          warehouse_section: 'B',
+          instock: '4000'
+        }
+      ]
+    }
+
+  ----------------------------------------------------------------
+4) Do use updateMany to update multiple documents in Customer collection with a specific condition
+  == Insertion 
+  db.customers.insertMany([{
+    customerid: 1,
+    customer_name: 'Jay',
+    mobile: '9586039287',
+    city: 'blr'
+  },{
+    customerid: 2,
+    customer_name: 'Payal',
+    mobile: '9586039898',
+    city: 'rjt'
+  },{
+    customerid: 3,
+    customer_name: 'Vyom',
+    mobile: '9586039777',
+    city: 'blr'
+  },{
+    customerid: 4,
+    customer_name: 'Rohit',
+    mobile: '9586039445',
+    city: 'jngh'
+  }])
+
+
+  ==Updation
+  db.customers.updateMany({ city: 'blr' }, { $set: { mobile:'9999999999' }})
